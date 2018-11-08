@@ -1,18 +1,15 @@
 package main
 
 import (
-	"fmt"
-)
-
-import (
 	"flag"
+	"io"
 	"log"
 	"net/http"
 )
 
 var (
-	host = flag.String("h", "127.0.0.1", "hostname")
-	port = flag.String("p", "8080", "port number")
+	host = flag.String("h", "192.168.0.1", "hostname")
+	port = flag.String("p", "80", "port number")
 	dir  = flag.String("d", ".", "directory to serve")
 )
 
@@ -42,7 +39,12 @@ func srvfiles() {
 	log.Fatal(http.ListenAndServe(*host+":"+*port, nil))
 }
 
+// wait for a connection, then send it output from r and read
+// it and send to w.
+func control(r io.Reader, w io.Writer) {
+	log.Fatal("not yet")
+}
+
 func main() {
 	flag.Parse()
 }
-
