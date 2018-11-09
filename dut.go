@@ -8,12 +8,14 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"time"
 )
 
 var (
 	host = flag.String("h", "192.168.0.1", "hostname")
-	port = flag.String("p", "80", "port number")
+	port = flag.String("p", "8080", "port number")
 	dir  = flag.String("d", ".", "directory to serve")
+	real = flag.Bool("r", true, "Run a real test")
 )
 
 var cacheHeaders = []string{
@@ -42,6 +44,7 @@ func srvfiles() {
 	log.Fatal(http.ListenAndServe(*host+":"+*port, nil))
 }
 
+// have a conversation
 func con(t, a string) error {
 	ln, err := net.Listen(t, a)
 	if err != nil {
@@ -49,10 +52,9 @@ func con(t, a string) error {
 		return err
 	}
 	log.Printf("Listening on %v", ln.Addr())
-	
+
 	c, err := ln.Accept()
 	if err != nil {
-		log.Print(err)
 		return err
 	}
 	log.Printf("Accepted %v", c)
@@ -66,8 +68,66 @@ func con(t, a string) error {
 	}
 	return nil
 }
+func test(t, a string) error {
+	ln, err := net.Listen(t, a)
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+	log.Printf("Listening on %v", ln.Addr())
+
+	if err := ln.(*net.TCPListener).SetDeadline(time.Now().Add(6 * time.Minute)); err != nil {
+		return err
+	}
+	c, err := ln.Accept()
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+	log.Printf("Accepted %v", c)
+	go func() {
+		if _, err := io.Copy(os.Stdout, c); err != nil {
+			log.Print(err)
+			return
+		}
+	}()
+
+	if _, err := c.Write([]byte("w")); err != nil {
+		log.Fatal(err)
+	}
+	if _, err := c.Write([]byte("r")); err != nil {
+		log.Fatal(err)
+	}
+	// other end reboots; do an accept
+	if err := ln.(*net.TCPListener).SetDeadline(time.Now().Add(6 * time.Minute)); err != nil {
+		return err
+	}
+	c, err = ln.Accept()
+	if err != nil {
+		log.Print(err)
+		return err
+	}
+	log.Printf("Accepted %v", c)
+	go func() {
+		if _, err := io.Copy(os.Stdout, c); err != nil {
+			log.Print(err)
+		}
+	}()
+	if _, err := c.Write([]byte("w")); err != nil {
+		log.Fatal(err)
+	}
+	return nil
+}
 func main() {
 	flag.Parse()
 	go srvfiles()
-	con("tcp", "192.168.0.1:8086")
+	if !*real {
+		con("tcp", "192.168.0.1:8086")
+		os.Exit(0)
+	}
+	if err := test("tcp", "192.168.0.1:8086"); err != nil {
+		log.Print(err)
+		os.Exit(2)
+	}
+	os.Exit(0)
 }

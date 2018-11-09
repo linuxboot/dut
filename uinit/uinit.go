@@ -8,6 +8,8 @@ import (
 	"net"
 	"os"
 	"os/exec"
+
+	"golang.org/x/sys/unix"
 )
 
 var welcome = `  ______________
@@ -32,10 +34,11 @@ func up(ip, dev string) {
 
 }
 func main() {
+	fmt.Print(welcome)
 	flag.Parse()
 	up("127.0.0.1/8", "lo")
 	up("192.168.0.2/24", "eth0")
-	cmd := exec.Command("wget", "http://192.168.0.1/etc/hosts")
+	cmd := exec.Command("wget", "http://192.168.0.1:80/bzImage")
 	if o, err := cmd.CombinedOutput(); err != nil {
 		log.Printf("ip link up failed(%v, %v); continuing", string(o), err)
 	}
@@ -44,11 +47,36 @@ func main() {
 		log.Fatal(err)
 	}
 	go func() {
-		if _, err := io.Copy(c, os.Stdin); err != nil {
-			fmt.Fprintln(os.Stderr, err)
+		var nerr int
+		var b = make([]byte, 1)
+		for {
+			if _, err := c.Read(b); err != nil {
+				fmt.Print(err)
+				if nerr > 128 {
+					return
+				}
+				nerr++
+			}
+			os.Stdout.Write(b)
+			switch b[0] {
+			case 'e':
+				os.Exit(0)
+			case 'k':
+				fmt.Println("kexec: not yet")
+			case 'a':
+				c.Write([]byte(welcome))
+			case 'r':
+				if err := unix.Reboot(unix.LINUX_REBOOT_CMD_RESTART); err != nil {
+					fmt.Fprintf(c, "%v\n", err)
+					fmt.Print(err)
+				}
+
+			default:
+				fmt.Fprintf(c, welcome)
+			}
 		}
 	}()
-	if _, err = io.Copy(os.Stdout, c); err != nil {
+	if _, err = io.Copy(c, os.Stdin); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
 
