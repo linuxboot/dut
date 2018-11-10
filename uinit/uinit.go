@@ -46,6 +46,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	c.Write([]byte(welcome))
 	go func() {
 		var nerr int
 		var b = make([]byte, 1)
