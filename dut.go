@@ -14,6 +14,7 @@ import (
 var (
 	host = flag.String("h", "192.168.0.1", "hostname")
 	port = flag.String("p", "8080", "port number")
+	conv = flag.String("c", "8086", "conv port number")
 	dir  = flag.String("d", ".", "directory to serve")
 	real = flag.Bool("r", true, "Run a real test")
 )
@@ -74,13 +75,14 @@ func test(t, a string) error {
 		log.Print(err)
 		return err
 	}
-	log.Printf("Listening on %v", ln.Addr())
+	log.Printf("Listening on %v at %v", ln.Addr(), time.Now())
 
-	if err := ln.(*net.TCPListener).SetDeadline(time.Now().Add(6 * time.Minute)); err != nil {
+	if err := ln.(*net.TCPListener).SetDeadline(time.Now().Add(1 * time.Minute)); err != nil {
 		return err
 	}
 	c, err := ln.Accept()
 	if err != nil {
+		log.Printf("Listen failed: %v at %v", err, time.Now())
 		log.Print(err)
 		return err
 	}
@@ -99,11 +101,12 @@ func test(t, a string) error {
 		log.Fatal(err)
 	}
 	// other end reboots; do an accept
-	if err := ln.(*net.TCPListener).SetDeadline(time.Now().Add(6 * time.Minute)); err != nil {
+	if err := ln.(*net.TCPListener).SetDeadline(time.Now().Add(3 * time.Minute)); err != nil {
 		return err
 	}
 	c, err = ln.Accept()
 	if err != nil {
+		log.Printf("Listen failed: %v at %v", err, time.Now())
 		log.Print(err)
 		return err
 	}
@@ -121,11 +124,12 @@ func test(t, a string) error {
 func main() {
 	flag.Parse()
 	go srvfiles()
+	a := *host + ":" + *conv
 	if !*real {
-		con("tcp", "192.168.0.1:8086")
+		con("tcp", a)
 		os.Exit(0)
 	}
-	if err := test("tcp", "192.168.0.1:8086"); err != nil {
+	if err := test("tcp", a); err != nil {
 		log.Print(err)
 		os.Exit(2)
 	}
