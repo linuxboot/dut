@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -13,10 +12,6 @@ import (
 )
 
 var (
-	host = flag.String("h", "192.168.0.2", "hostname")
-	port = flag.String("p", "8080", "port number")
-	conv = flag.String("c", "8086", "conv port number")
-
 	welcome = `  ______________
 < welcome to DUT >
   --------------
@@ -39,9 +34,8 @@ func up(ip, dev string) {
 	}
 
 }
-func main() {
+func uinit() error{
 	fmt.Print(welcome)
-	flag.Parse()
 	up("127.0.0.1/8", "lo")
 	up(*host+"/24", "eth0")
 	cmd := exec.Command("wget", fmt.Sprintf("http://%s:%s/bzImage", *host, *port))
@@ -86,5 +80,6 @@ func main() {
 	if _, err = io.Copy(c, os.Stdin); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 	}
+	return err
 
 }

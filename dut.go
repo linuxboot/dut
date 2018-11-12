@@ -1,3 +1,6 @@
+// This is a very simple dut program. It builds into one binary to implement
+// both client and server. It's just easier to see both sides of the code and test
+// that way.
 package main
 
 import (
@@ -16,7 +19,8 @@ var (
 	port = flag.String("p", "8080", "port number")
 	conv = flag.String("c", "8086", "conv port number")
 	dir  = flag.String("d", ".", "directory to serve")
-	real = flag.Bool("r", true, "Run a real test")
+	real = flag.Bool("R", true, "Run a real test")
+	runDUT = flag.Bool("r", true, "run as the DUT controller")
 )
 
 var cacheHeaders = []string{
@@ -121,17 +125,29 @@ func test(t, a string) error {
 	}
 	return nil
 }
-func main() {
-	flag.Parse()
+func dut() error {
 	go srvfiles()
 	a := *host + ":" + *conv
 	if !*real {
 		con("tcp", a)
-		os.Exit(0)
+		return nil
 	}
 	if err := test("tcp", a); err != nil {
-		log.Print(err)
-		os.Exit(2)
+		return err
 	}
-	os.Exit(0)
+	return nil
 }
+
+func main() {
+	flag.Parse()
+	var err error
+	if *runDUT {
+		err = dut()
+	} else {
+		err = uinit()
+	}
+	if err != nil {
+		log.Fatal(err)
+	}
+}	
+		
