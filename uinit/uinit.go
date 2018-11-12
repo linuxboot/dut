@@ -12,7 +12,12 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-var welcome = `  ______________
+var (
+	host = flag.String("h", "192.168.0.2", "hostname")
+	port = flag.String("p", "8080", "port number")
+	conv = flag.String("c", "8086", "conv port number")
+
+	welcome = `  ______________
 < welcome to DUT >
   --------------
          \   ^__^ 
@@ -21,6 +26,7 @@ var welcome = `  ______________
                  ||----w |
                  ||     ||
 `
+)
 
 func up(ip, dev string) {
 	cmd := exec.Command("ip", "addr", "add", ip, dev)
@@ -37,12 +43,12 @@ func main() {
 	fmt.Print(welcome)
 	flag.Parse()
 	up("127.0.0.1/8", "lo")
-	up("192.168.0.2/24", "eth0")
-	cmd := exec.Command("wget", "http://192.168.0.1:80/bzImage")
+	up(*host+"/24", "eth0")
+	cmd := exec.Command("wget", fmt.Sprintf("http://%s:%s/bzImage", *host, *port))
 	if o, err := cmd.CombinedOutput(); err != nil {
 		log.Printf("ip link up failed(%v, %v); continuing", string(o), err)
 	}
-	c, err := net.Dial("tcp", "192.168.0.1:8086")
+	c, err := net.Dial("tcp", fmt.Sprintf("http://%s:%s/bzImage", *host, *conv))
 	if err != nil {
 		log.Fatal(err)
 	}
