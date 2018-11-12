@@ -43,17 +43,6 @@ func dutAccept(l net.Listener) (net.Conn, error) {
 	return c, nil
 }
 
-func dutIO(c net.Conn, b []byte, r []byte) error {
-	if _, err := c.Write(b); err != nil {
-		return err
-	}
-	if r != nil {
-		_, err := c.Read(r)
-		return err
-	}
-	return nil
-}
-
 func dutRun(host, port string) error {
 	l, err := dutStart("tcp", host, port)
 	if err != nil {
