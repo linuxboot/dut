@@ -6,11 +6,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io"
 	"log"
 	"net"
 	"net/rpc"
-	"os"
 	"time"
 )
 
@@ -45,44 +43,6 @@ func dutAccept(l net.Listener) (net.Conn, error) {
 	return c, nil
 }
 
-func dutRun(host, port string) error {
-	l, err := dutStart("tcp", host, port)
-	if err != nil {
-		return err
-	}
-	c, err := dutAccept(l)
-	if err != nil {
-		return err
-	}
-	go func() {
-		if _, err := io.Copy(os.Stdout, c); err != nil {
-			log.Print(err)
-			return
-		}
-	}()
-	if err := dutIO(c, []byte("w"), nil); err != nil {
-		log.Fatal(err)
-	}
-	if err := dutIO(c, []byte("r"), nil); err != nil {
-		log.Fatal(err)
-	}
-	// other end reboots; do an accept
-	if c, err = dutAccept(l); err != nil {
-		return err
-	}
-
-	log.Printf("Accepted %v", c)
-	go func() {
-		if _, err := io.Copy(os.Stdout, c); err != nil {
-			log.Print(err)
-		}
-	}()
-	if err := dutIO(c, []byte("w"), nil); err != nil {
-		log.Fatal(err)
-	}
-	return nil
-}
-
 func dutRPC(host, port string) error {
 	l, err := dutStart("tcp", host, port)
 	if err != nil {
@@ -115,9 +75,6 @@ func main() {
 	flag.Parse()
 	var err error
 	if *runDUT {
-		if false {
-			err = dutRun(*host, *port)
-		}
 		err = dutRPC(*host, *port)
 	} else {
 		err = uinit(*host, *port)
