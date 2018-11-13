@@ -38,9 +38,6 @@ func up(ip, dev string) {
 
 }
 
-func cmd(s string, c net.Conn) error {
-	return nil
-}
 func uinit(t, a string) error {
 	h := strings.Split(a, ":")
 	if os.Getuid() == 0 {
