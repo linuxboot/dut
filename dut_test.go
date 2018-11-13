@@ -44,16 +44,4 @@ func TestUinit(t *testing.T) {
 	if string(r.C) != welcome {
 		t.Errorf("welcome: got %s, want %s", string(b), welcome)
 	}
-	if false {
-		b = make([]byte, len(welcome))
-		if err := dutIO(c, []byte("r"), b); err != nil {
-			t.Error(err)
-		}
-		r := string(b[:len(rebooting)])
-		t.Logf("welcome? %v", r)
-		if r != rebooting {
-			t.Errorf("rebooting: got %q, want %q", r, rebooting)
-		}
-	}
-
 }

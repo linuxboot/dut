@@ -1,16 +1,12 @@
 package main
 
 import (
-	"fmt"
-	"io"
 	"log"
 	"net"
 	"net/rpc"
 	"os"
 	"os/exec"
 	"strings"
-
-	"golang.org/x/sys/unix"
 )
 
 var (
@@ -49,51 +45,12 @@ func uinit(t, a string) error {
 		log.Fatal(err)
 	}
 
-	if true {
-		var Cmd Command
-		s := rpc.NewServer()
-		if err := s.Register(&Cmd); err != nil {
-			return err
-		}
-		s.ServeConn(c)
-	} else {
-		go func() {
-			var nerr int
-			var b = make([]byte, 1)
-			for {
-				if _, err := c.Read(b); err != nil {
-					fmt.Print(err)
-					if nerr > 128 {
-						return
-					}
-					nerr++
-				}
-				os.Stdout.Write(b)
-				switch b[0] {
-				case 'e':
-					os.Exit(0)
-				case 'k':
-					fmt.Println("kexec: not yet")
-				case 'a':
-					c.Write([]byte(welcome))
-				case 'r':
-					c.Write([]byte(rebooting))
-					// well, this better never run in a test ...
-					if err := unix.Reboot(unix.LINUX_REBOOT_CMD_RESTART); err != nil {
-						fmt.Fprintf(c, "%v\n", err)
-						fmt.Print(err)
-					}
-					c.Close()
-					return
-				default:
-					fmt.Fprintf(c, welcome)
-				}
-			}
-		}()
-		if _, err = io.Copy(c, os.Stdin); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-		}
+	var Cmd Command
+	s := rpc.NewServer()
+	if err := s.Register(&Cmd); err != nil {
+		return err
 	}
+	s.ServeConn(c)
 	return err
 
 }
