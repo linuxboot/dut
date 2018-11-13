@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/rpc"
 	"os"
 	"os/exec"
 	"strings"
@@ -14,7 +15,7 @@ import (
 
 var (
 	rebooting = "Rebooting!"
-	welcome = `  ______________
+	welcome   = `  ______________
 < welcome to DUT >
   --------------
          \   ^__^ 
@@ -37,10 +38,10 @@ func up(ip, dev string) {
 
 }
 
-func cmd(s string, c net.Conn)  error {
+func cmd(s string, c net.Conn) error {
 	return nil
 }
-func uinit(t, a string) error{
+func uinit(t, a string) error {
 	h := strings.Split(a, ":")
 	if os.Getuid() == 0 {
 		up("127.0.0.1/8", "lo")
@@ -51,41 +52,50 @@ func uinit(t, a string) error{
 		log.Fatal(err)
 	}
 
-	go func() {
-		var nerr int
-		var b = make([]byte, 1)
-		for {
-			if _, err := c.Read(b); err != nil {
-				fmt.Print(err)
-				if nerr > 128 {
-					return
-				}
-				nerr++
-			}
-			os.Stdout.Write(b)
-			switch b[0] {
-			case 'e':
-				os.Exit(0)
-			case 'k':
-				fmt.Println("kexec: not yet")
-			case 'a':
-				c.Write([]byte(welcome))
-			case 'r':
-				c.Write([]byte(rebooting))
-				// well, this better never run in a test ...
-				if err := unix.Reboot(unix.LINUX_REBOOT_CMD_RESTART); err != nil {
-					fmt.Fprintf(c, "%v\n", err)
-					fmt.Print(err)
-				}
-				c.Close()
-				return
-			default:
-				fmt.Fprintf(c, welcome)
-			}
+	if true {
+		var Cmd Command
+		s := rpc.NewServer()
+		if err := s.Register(&Cmd); err != nil {
+			return err
 		}
-	}()
-	if _, err = io.Copy(c, os.Stdin); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		s.ServeConn(c)
+	} else {
+		go func() {
+			var nerr int
+			var b = make([]byte, 1)
+			for {
+				if _, err := c.Read(b); err != nil {
+					fmt.Print(err)
+					if nerr > 128 {
+						return
+					}
+					nerr++
+				}
+				os.Stdout.Write(b)
+				switch b[0] {
+				case 'e':
+					os.Exit(0)
+				case 'k':
+					fmt.Println("kexec: not yet")
+				case 'a':
+					c.Write([]byte(welcome))
+				case 'r':
+					c.Write([]byte(rebooting))
+					// well, this better never run in a test ...
+					if err := unix.Reboot(unix.LINUX_REBOOT_CMD_RESTART); err != nil {
+						fmt.Fprintf(c, "%v\n", err)
+						fmt.Print(err)
+					}
+					c.Close()
+					return
+				default:
+					fmt.Fprintf(c, welcome)
+				}
+			}
+		}()
+		if _, err = io.Copy(c, os.Stdin); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+		}
 	}
 	return err
 
