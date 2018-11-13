@@ -29,15 +29,6 @@ func TestUinit(t *testing.T) {
 	t.Logf("Connected on %v", c)
 	
 	var b = make([]byte, len(welcome))
-	// read the banner
-	if err := dutIO(c, nil, b); err != nil {
-		t.Error(err)
-	}
-	t.Logf("banner? %v", string(b))
-	if string(b) != welcome {
-		t.Errorf("welcome: got %s, want %s", string(b), welcome)
-	}
-	
 	// issue a command
 	b = make([]byte, len(welcome))
 	if err := dutIO(c, []byte("a"), b); err != nil {
