@@ -7,6 +7,15 @@ import (
 )
 
 func TestUinit(t *testing.T) {
+	var tests = []struct {
+		c   string
+		r   interface{}
+		err string
+	}{
+		{c: "Welcome", r: RPCWelcome{}},
+		{c: "Reboot", r: RPCReboot{}},
+		{c: "Kexec", r: RPCKexec{When: 5 * time.Second}, err: "Not yet"},
+	}
 	l, err := dutStart("tcp", "localhost", "")
 	if err != nil {
 		t.Fatal(err)
@@ -29,19 +38,15 @@ func TestUinit(t *testing.T) {
 	t.Logf("Connected on %v", c)
 
 	cl := rpc.NewClient(c)
-	var b = make([]byte, len(welcome))
-	// issue a command
-	b = make([]byte, len(welcome))
-	call := &RPCCmd{C: b}
-	var r RPCRes
-	if err = cl.Call("Command.Welcome", call, &r); err != nil {
-		t.Fatal(err)
-	}
-	if r.Err != nil {
-		t.Fatal(err)
-	}
-	t.Logf("welcome comand? %v", string(r.C))
-	if string(r.C) != welcome {
-		t.Errorf("welcome: got %s, want %s", string(b), welcome)
+	for _, tt := range tests {
+		t.Run(tt.c, func(t *testing.T) {
+			var r RPCRes
+			if err = cl.Call("Command."+tt.c, tt.r, &r); err != nil {
+				t.Fatalf("Call to %v: got %v, want nil", tt.c, err)
+			}
+			if r.Err != tt.err {
+				t.Errorf("%v: got %v, want %v", tt, r.Err, tt.err)
+			}
+		})
 	}
 }

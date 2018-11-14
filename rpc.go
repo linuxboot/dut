@@ -1,29 +1,26 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"time"
-	
-	"golang.org/x/sys/unix"
 
+	"golang.org/x/sys/unix"
 )
 
 type RPCRes struct {
 	C   []byte
-	Err error
+	Err string
 }
 
 type Command int
 
-type RPCCmd struct {
-	C []byte
+type RPCWelcome struct {
 }
 
-func (*Command) Welcome(args *RPCCmd, r *RPCRes) error {
+func (*Command) Welcome(args *RPCWelcome, r *RPCRes) error {
 	r.C = []byte(welcome)
-	r.Err = nil
+	r.Err = ""
 	return nil
 }
 
@@ -64,7 +61,6 @@ func (*Command) Kexec(args *RPCReboot, r *RPCRes) error {
 	go func() {
 		time.Sleep(args.When)
 	}()
-	*r = RPCRes{Err: fmt.Errorf("Not yet"),}
+	*r = RPCRes{Err: "Not yet"}
 	return nil
 }
-

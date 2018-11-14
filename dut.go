@@ -58,8 +58,8 @@ func dutRPC(host, port string) error {
 	}
 	cl := rpc.NewClient(c)
 	log.Printf("Accepted %v", cl)
-	for _, cmd := range []*RPCCmd{
-		{[]byte("w")},
+	for _, cmd := range []interface{}{
+		RPCWelcome{},
 	} {
 		var r RPCRes
 		if err := cl.Call("Command", cmd, &r); err != nil {
