@@ -21,6 +21,7 @@ type RPCWelcome struct {
 func (*Command) Welcome(args *RPCWelcome, r *RPCRes) error {
 	r.C = []byte(welcome)
 	r.Err = ""
+	log.Printf("welcome")
 	return nil
 }
 
@@ -31,9 +32,11 @@ type RPCExit struct {
 func (*Command) Die(args *RPCExit, r *RPCRes) error {
 	go func() {
 		time.Sleep(args.When)
+		log.Printf("die exits")
 		os.Exit(0)
 	}()
 	*r = RPCRes{}
+	log.Printf("die returns")
 	return nil
 }
 
@@ -49,6 +52,7 @@ func (*Command) Reboot(args *RPCReboot, r *RPCRes) error {
 		}
 	}()
 	*r = RPCRes{}
+	log.Printf("reboot returns")
 	return nil
 }
 
@@ -62,5 +66,6 @@ func (*Command) Kexec(args *RPCReboot, r *RPCRes) error {
 		time.Sleep(args.When)
 	}()
 	*r = RPCRes{Err: "Not yet"}
+	log.Printf("kexec returns")
 	return nil
 }

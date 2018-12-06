@@ -36,6 +36,7 @@ func up(ip, dev string) {
 
 func uinit(t, a string) error {
 	h := strings.Split(a, ":")
+	log.Printf("here we are in uinit")
 	if os.Getuid() == 0 {
 		up("127.0.0.1/8", "lo")
 		up(h[0]+"/24", "eth0")
@@ -51,6 +52,7 @@ func uinit(t, a string) error {
 		return err
 	}
 	s.ServeConn(c)
+	log.Printf("And uinit is all done.")
 	return err
 
 }
