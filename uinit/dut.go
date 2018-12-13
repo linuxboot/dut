@@ -54,21 +54,30 @@ func dutRPC(host, port string) error {
 	if err != nil {
 		return err
 	}
-	// other end reboots; do an accept
+	cl := rpc.NewClient(c)
+	for _, cmd := range []struct {
+		call string
+		args interface{}
+	} {
+		{ "Command.Welcome", &RPCWelcome{}},
+		{ "Command.Reboot", &RPCReboot{}},
+	} {
+		var r RPCRes
+		if err := cl.Call(cmd.call, cmd.args, &r); err != nil {
+			return err
+		}
+		fmt.Printf("%v(%v): %v\n", cmd.call, cmd.args, string(r.C))
+	}
+
 	if c, err = dutAccept(l); err != nil {
 		return err
 	}
-	cl := rpc.NewClient(c)
-	log.Printf("Accepted %v", cl)
-	for _, cmd := range []interface{}{
-		RPCWelcome{},
-	} {
-		var r RPCRes
-		if err := cl.Call("Command", cmd, &r); err != nil {
-			return err
-		}
-		fmt.Printf("%v: %v\n", string(r.C), r.Err)
+	cl = rpc.NewClient(c)
+	var r RPCRes
+	if err := cl.Call("Command.Welcome", &RPCWelcome{}, &r); err != nil {
+		return err
 	}
+	fmt.Printf("%v(%v): %v\n","Command.Welcome", nil, string(r.C))
 
 	return nil
 }
