@@ -14,9 +14,11 @@ import (
 
 var (
 	host   = flag.String("h", "192.168.0.1", "hostname")
+	me   = flag.String("me", "192.168.0.2", "dut hostname")
 	port   = flag.String("p", "8080", "port number")
 	dir    = flag.String("d", ".", "directory to serve")
-	runDUT = flag.Bool("r", true, "run as the DUT controller")
+	runDUT = flag.Bool("r", false, "run as the DUT controller")
+	configNet = flag.Bool("C", true, "configure the network")
 )
 
 func dutStart(t, host, port string) (net.Listener, error) {
@@ -77,9 +79,8 @@ func main() {
 	if *runDUT {
 		err = dutRPC(*host, *port)
 	} else {
-		err = uinit(*host, *port)
+		err = uinit(*host, *me, *port)
 	}
-	if err != nil {
-		log.Fatal(err)
-	}
+	log.Printf("We are now done ......................")
+	log.Print(err)
 }
