@@ -50,7 +50,7 @@ func uinit(r, l, p string) error {
 		//go up("127.0.0.1/8", "lo")
 		up(l+"/24", "eth0")
 	}
-	na := r+":"+p
+	na := r + ":" + p
 	log.Printf("Now dial %v", na)
 	c, err := net.Dial("tcp", na)
 	if err != nil {

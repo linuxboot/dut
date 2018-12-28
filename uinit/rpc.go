@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"time"
 
 	"golang.org/x/sys/unix"
@@ -67,5 +69,21 @@ func (*Command) Kexec(args *RPCReboot, r *RPCRes) error {
 	}()
 	*r = RPCRes{Err: "Not yet"}
 	log.Printf("kexec returns")
+	return nil
+}
+
+type RPCSsh struct {
+}
+
+func (*Command) Ssh(args *RPCSsh, r *RPCRes) error {
+	res := make(chan error)
+	go func() {
+		c := exec.Command("/bbin/sshd")
+		err := c.Start()
+		res <- err
+	}()
+	err := <-res
+	*r = RPCRes{Err: fmt.Sprintf("%v", err)}
+	log.Printf("sshd returns")
 	return nil
 }

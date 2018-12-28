@@ -9,15 +9,16 @@ import (
 	"log"
 	"net"
 	"net/rpc"
+	"os"
 	"time"
 )
 
 var (
-	host   = flag.String("h", "192.168.0.1", "hostname")
-	me   = flag.String("me", "192.168.0.2", "dut hostname")
-	port   = flag.String("p", "8080", "port number")
-	dir    = flag.String("d", ".", "directory to serve")
-	runDUT = flag.Bool("r", false, "run as the DUT controller")
+	host      = flag.String("h", "192.168.0.1", "hostname")
+	me        = flag.String("me", "192.168.0.2", "dut hostname")
+	port      = flag.String("p", "8080", "port number")
+	dir       = flag.String("d", ".", "directory to serve")
+	runDUT    = flag.Bool("r", false, "run as the DUT controller")
 	configNet = flag.Bool("C", true, "configure the network")
 )
 
@@ -58,9 +59,9 @@ func dutRPC(host, port string) error {
 	for _, cmd := range []struct {
 		call string
 		args interface{}
-	} {
-		{ "Command.Welcome", &RPCWelcome{}},
-		{ "Command.Reboot", &RPCReboot{}},
+	}{
+		{"Command.Welcome", &RPCWelcome{}},
+		{"Command.Reboot", &RPCReboot{}},
 	} {
 		var r RPCRes
 		if err := cl.Call(cmd.call, cmd.args, &r); err != nil {
@@ -77,7 +78,7 @@ func dutRPC(host, port string) error {
 	if err := cl.Call("Command.Welcome", &RPCWelcome{}, &r); err != nil {
 		return err
 	}
-	fmt.Printf("%v(%v): %v\n","Command.Welcome", nil, string(r.C))
+	fmt.Printf("%v(%v): %v\n", "Command.Welcome", nil, string(r.C))
 
 	return nil
 }
@@ -91,5 +92,8 @@ func main() {
 		err = uinit(*host, *me, *port)
 	}
 	log.Printf("We are now done ......................")
-	log.Print(err)
+	if err != nil {
+		log.Printf("%v", err)
+		os.Exit(2)
+	}
 }
