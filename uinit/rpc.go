@@ -73,12 +73,13 @@ func (*Command) Kexec(args *RPCReboot, r *RPCRes) error {
 }
 
 type RPCSsh struct {
+	args []string
 }
 
 func (*Command) Ssh(args *RPCSsh, r *RPCRes) error {
 	res := make(chan error)
 	go func() {
-		c := exec.Command("/bbin/sshd")
+		c := exec.Command("/bbin/sshd", args.args...)
 		err := c.Start()
 		res <- err
 	}()

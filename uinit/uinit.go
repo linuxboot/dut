@@ -58,6 +58,12 @@ func uinit(r, l, p string) error {
 		return err
 	}
 
+	log.Printf("Start an sshd")
+	sshd := exec.Command("/bbin/sshd")
+	sshd.Stdout, sshd.Stderr = os.Stdout, os.Stderr
+	if err := sshd.Start(); err != nil {
+		log.Printf("failed to start an sshd, oh well: %v", err)
+	}
 	log.Printf("Start the RPC server")
 	var Cmd Command
 	s := rpc.NewServer()

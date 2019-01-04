@@ -18,7 +18,7 @@ var (
 	me        = flag.String("me", "192.168.0.2", "dut hostname")
 	port      = flag.String("p", "8080", "port number")
 	dir       = flag.String("d", ".", "directory to serve")
-	runDUT    = flag.Bool("r", false, "run as the DUT controller")
+	mode = flag.String("m", "device", "what mode to run in -- device, tester, or ssh starter")
 	configNet = flag.Bool("C", true, "configure the network")
 )
 
@@ -83,12 +83,31 @@ func dutRPC(host, port string) error {
 	return nil
 }
 
+
+func dutssh(host, port string, args ...string) error {
+	l, err := dutStart("tcp", host, port)
+	if err != nil {
+		return err
+	}
+	c, err := dutAccept(l)
+	if err != nil {
+		return err
+	}
+	var r RPCRes
+	cl := rpc.NewClient(c)
+	err = cl.Call("Command.Ssh", &RPCSsh{args: args}, &r)
+	return err
+}
+
 func main() {
 	flag.Parse()
 	var err error
-	if *runDUT {
+	switch *mode {
+	case "tester":
 		err = dutRPC(*host, *port)
-	} else {
+	case "ssh":
+		dutssh(*host, *port, flag.Args()...)
+	case "device":
 		err = uinit(*host, *me, *port)
 	}
 	log.Printf("We are now done ......................")
