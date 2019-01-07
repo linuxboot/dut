@@ -6,6 +6,7 @@ import (
 	"net/rpc"
 	"os"
 	"os/exec"
+	"syscall"
 	"time"
 )
 
@@ -50,19 +51,22 @@ func uinit(r, l, p string) error {
 		//go up("127.0.0.1/8", "lo")
 		up(l+"/24", "eth0")
 	}
+
+	log.Printf("Start an sshd")
+	sshd := exec.Command("/bbin/sshd")
+	sshd.Stdout, sshd.Stderr = os.Stdout, os.Stderr
+	sshd.SysProcAttr = &syscall.SysProcAttr{}
+	sshd.SysProcAttr.Setpgid = true
+
+	if err := sshd.Start(); err != nil {
+		log.Printf("failed to start an sshd, oh well: %v", err)
+	}
 	na := r + ":" + p
 	log.Printf("Now dial %v", na)
 	c, err := net.Dial("tcp", na)
 	if err != nil {
 		log.Printf("Dial went poorly")
 		return err
-	}
-
-	log.Printf("Start an sshd")
-	sshd := exec.Command("/bbin/sshd")
-	sshd.Stdout, sshd.Stderr = os.Stdout, os.Stderr
-	if err := sshd.Start(); err != nil {
-		log.Printf("failed to start an sshd, oh well: %v", err)
 	}
 	log.Printf("Start the RPC server")
 	var Cmd Command
