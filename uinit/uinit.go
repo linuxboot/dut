@@ -6,7 +6,6 @@ import (
 	"net/rpc"
 	"os"
 	"os/exec"
-	"syscall"
 	"time"
 )
 
@@ -25,19 +24,16 @@ var (
 
 func up(ip, dev string) {
 	cmd := exec.Command("ip", "link", "set", "dev", dev, "up")
-	cmd.Stdout, cmd.Stdout = os.Stdout, os.Stderr
-	if err := cmd.Run(); err != nil {
-		log.Printf("ip link up failed(%v); continuing", err)
+	if o, err := cmd.CombinedOutput(); err != nil {
+		log.Printf("ip link up failed(%q, %v); continuing", o, err)
 	}
 	cmd = exec.Command("ip", "addr", "add", ip, dev)
-	cmd.Stdout, cmd.Stdout = os.Stdout, os.Stderr
-	if err := cmd.Run(); err != nil {
-		log.Printf("ip addr add failed(%v); continuing", err)
+	if o, err := cmd.CombinedOutput(); err != nil {
+		log.Printf("ip addr add failed(%q, %v); continuing", o, err)
 	}
 	cmd = exec.Command("ip", "addr")
-	cmd.Stdout, cmd.Stdout = os.Stdout, os.Stderr
-	if err := cmd.Run(); err != nil {
-		log.Printf("ip addr failed(%v); continuing", err)
+	if o, err := cmd.CombinedOutput(); err != nil {
+		log.Printf("ip addr failed%q, (%v); continuing", o, err)
 	}
 	log.Printf("Sleeping 16 seconds for stupid network to come up")
 	time.Sleep(16 * time.Second)
@@ -52,15 +48,6 @@ func uinit(r, l, p string) error {
 		up(l+"/24", "eth0")
 	}
 
-	log.Printf("Start an sshd")
-	sshd := exec.Command("/bbin/sshd")
-	sshd.Stdout, sshd.Stderr = os.Stdout, os.Stderr
-	sshd.SysProcAttr = &syscall.SysProcAttr{}
-	sshd.SysProcAttr.Setpgid = true
-
-	if err := sshd.Start(); err != nil {
-		log.Printf("failed to start an sshd, oh well: %v", err)
-	}
 	na := r + ":" + p
 	log.Printf("Now dial %v", na)
 	c, err := net.Dial("tcp", na)

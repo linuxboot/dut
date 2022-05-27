@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
 	"time"
 
 	"golang.org/x/sys/unix"
@@ -72,19 +71,23 @@ func (*Command) Kexec(args *RPCReboot, r *RPCRes) error {
 	return nil
 }
 
-type RPCSsh struct {
-	args []string
+type RPCCPU struct {
+	PubKey  []byte
+	HostKey []byte
+	Port    string
 }
 
-func (*Command) Ssh(args *RPCSsh, r *RPCRes) error {
+func (*Command) CPU(args *RPCCPU, r *RPCRes) error {
+	v("CPU")
 	res := make(chan error)
-	go func() {
-		c := exec.Command("/bbin/sshd", args.args...)
-		err := c.Start()
+	go func(pubKey, hostKey []byte, port string) {
+		v("cpu serve(%q,%q,%q)", pubKey, hostKey, port)
+		err := serve(pubKey, hostKey, port)
+		v("cpu serve returns")
 		res <- err
-	}()
+	}(args.PubKey, args.HostKey, args.Port)
 	err := <-res
 	*r = RPCRes{Err: fmt.Sprintf("%v", err)}
-	log.Printf("sshd returns")
+	v("cpud returns")
 	return nil
 }

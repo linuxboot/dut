@@ -26,7 +26,7 @@ func TestUinit(t *testing.T) {
 	// Kick off our node.
 	go func() {
 		time.Sleep(1)
-		if err := uinit(a.Network(), a.String()); err != nil {
+		if err := uinit(a.Network(), a.String(), "17010"); err != nil {
 			t.Fatalf("starting uinit: got %v, want nil", err)
 		}
 	}()
