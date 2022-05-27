@@ -5,6 +5,9 @@ import (
 	"net"
 	"net/rpc"
 	"os"
+	"time"
+
+	"github.com/cenkalti/backoff/v4"
 )
 
 var (
@@ -26,9 +29,21 @@ func uinit(r, p string) error {
 
 	na := r + ":" + p
 	log.Printf("Now dial %v", na)
-	c, err := net.Dial("tcp", na)
-	if err != nil {
-		log.Printf("Dial went poorly")
+	b := backoff.NewExponentialBackOff()
+	// We'll go at it for 5 minutes, then reboot.
+	b.MaxElapsedTime = 5 * time.Minute
+
+	var c net.Conn
+	f := func() error {
+		nc, err := net.Dial("tcp", na)
+		if err != nil {
+			log.Printf("Dial went poorly")
+			return err
+		}
+		c = nc
+		return nil
+	}
+	if err := backoff.Retry(f, b); err != nil {
 		return err
 	}
 	log.Printf("Start the RPC server")
@@ -42,6 +57,6 @@ func uinit(r, p string) error {
 	log.Printf("Serve and protect")
 	s.ServeConn(c)
 	log.Printf("And uinit is all done.")
-	return err
+	return nil
 
 }

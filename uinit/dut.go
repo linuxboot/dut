@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/u-root/u-root/pkg/ulog"
+	"golang.org/x/sys/unix"
 )
 
 var (
@@ -149,7 +150,7 @@ func main() {
 	}
 	a := flag.Args()
 	if len(a) == 0 {
-		os.Args = []string{"device"}
+		a = []string{"device"}
 	}
 
 	os.Args = a
@@ -172,6 +173,11 @@ func main() {
 		}
 	case "device":
 		err = uinit(*host, *port)
+		// What to do after a return? Reboot I suppose.
+		log.Printf("Device returns with error %v", err)
+		if err := unix.Reboot(int(unix.LINUX_REBOOT_CMD_RESTART)); err != nil {
+			log.Printf("Reboot failed, not sure what to do now.")
+		}
 	default:
 		log.Printf("Unknown mode %v", a[0])
 	}
