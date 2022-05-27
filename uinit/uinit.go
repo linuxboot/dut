@@ -5,8 +5,6 @@ import (
 	"net"
 	"net/rpc"
 	"os"
-	"os/exec"
-	"time"
 )
 
 var (
@@ -22,31 +20,9 @@ var (
 `
 )
 
-func up(ip, dev string) {
-	cmd := exec.Command("ip", "link", "set", "dev", dev, "up")
-	if o, err := cmd.CombinedOutput(); err != nil {
-		log.Printf("ip link up failed(%q, %v); continuing", o, err)
-	}
-	cmd = exec.Command("ip", "addr", "add", ip, dev)
-	if o, err := cmd.CombinedOutput(); err != nil {
-		log.Printf("ip addr add failed(%q, %v); continuing", o, err)
-	}
-	cmd = exec.Command("ip", "addr")
-	if o, err := cmd.CombinedOutput(); err != nil {
-		log.Printf("ip addr failed%q, (%v); continuing", o, err)
-	}
-	log.Printf("Sleeping 16 seconds for stupid network to come up")
-	time.Sleep(16 * time.Second)
-	log.Printf("up all done")
-}
-
-func uinit(r, l, p string) error {
+func uinit(r, p string) error {
 	log.Printf("here we are in uinit")
 	log.Printf("UINIT uid is %d", os.Getuid())
-	if os.Getuid() == 0 && *configNet {
-		//go up("127.0.0.1/8", "lo")
-		up(l+"/24", "eth0")
-	}
 
 	na := r + ":" + p
 	log.Printf("Now dial %v", na)

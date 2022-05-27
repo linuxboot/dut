@@ -17,14 +17,12 @@ import (
 )
 
 var (
-	debug     = flag.Bool("debug", false, "Enable debug prints")
-	host      = flag.String("h", "192.168.0.1", "hostname")
-	klog      = flag.Bool("klog", false, "Direct all logging to klog -- depends on debug")
-	me        = flag.String("me", "192.168.0.2", "dut hostname")
-	port      = flag.String("p", "8080", "port number")
-	dir       = flag.String("d", ".", "directory to serve")
-	mode      = flag.String("m", "device", "what mode to run in -- device, tester, or ssh starter")
-	configNet = flag.Bool("C", true, "configure the network")
+	debug = flag.Bool("debug", false, "Enable debug prints")
+	host  = flag.String("h", "192.168.0.1", "hostname")
+	klog  = flag.Bool("klog", false, "Direct all logging to klog -- depends on debug")
+	port  = flag.String("p", "8080", "port number")
+	dir   = flag.String("d", ".", "directory to serve")
+	mode  = flag.String("m", "device", "what mode to run in -- device, tester, or ssh starter")
 
 	// for debug
 	v = func(string, ...interface{}) {}
@@ -141,12 +139,6 @@ func dutcpu(host, port, pubkey, hostkey, cpuport string) error {
 
 func main() {
 	// for CPU
-	var (
-		pubKey  = flag.String("pubkey", "key.pub", "public key file")
-		hostKey = flag.String("hostkey", "", "host key file -- usually empty")
-		cpuPort = flag.String("cpuport", "17010", "cpu port -- IANA value is ncpu tcp/17010")
-	)
-
 	flag.Parse()
 
 	if *debug {
@@ -161,9 +153,15 @@ func main() {
 	case "tester":
 		err = dutRPC(*host, *port)
 	case "cpu":
+		var (
+			pubKey  = flag.String("pubkey", "key.pub", "public key file")
+			hostKey = flag.String("hostkey", "", "host key file -- usually empty")
+			cpuPort = flag.String("cpuport", "17010", "cpu port -- IANA value is ncpu tcp/17010")
+		)
+		flag.Parse()
 		dutcpu(*host, *port, *pubKey, *hostKey, *cpuPort)
 	case "device":
-		err = uinit(*host, *me, *port)
+		err = uinit(*host, *port)
 	}
 	log.Printf("We are now done ......................")
 	if err != nil {
