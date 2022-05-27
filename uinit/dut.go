@@ -17,12 +17,11 @@ import (
 )
 
 var (
-	debug = flag.Bool("debug", false, "Enable debug prints")
-	host  = flag.String("h", "192.168.0.1", "hostname")
+	debug = flag.Bool("d", false, "Enable debug prints")
+	host  = flag.String("host", "192.168.0.1", "hostname")
 	klog  = flag.Bool("klog", false, "Direct all logging to klog -- depends on debug")
-	port  = flag.String("p", "8080", "port number")
-	dir   = flag.String("d", ".", "directory to serve")
-	mode  = flag.String("m", "device", "what mode to run in -- device, tester, or ssh starter")
+	port  = flag.String("port", "8080", "port number")
+	dir   = flag.String("dir", ".", "directory to serve")
 
 	// for debug
 	v = func(string, ...interface{}) {}
@@ -148,8 +147,15 @@ func main() {
 			v = ulog.KernelLog.Printf
 		}
 	}
+	a := flag.Args()
+	if len(a) == 0 {
+		os.Args = []string{"device"}
+	}
+
+	os.Args = a
 	var err error
-	switch *mode {
+	v("Mode is %v", a[0])
+	switch a[0] {
 	case "tester":
 		err = dutRPC(*host, *port)
 	case "cpu":
@@ -158,10 +164,16 @@ func main() {
 			hostKey = flag.String("hostkey", "", "host key file -- usually empty")
 			cpuPort = flag.String("cpuport", "17010", "cpu port -- IANA value is ncpu tcp/17010")
 		)
+		v("Parse %v", os.Args)
 		flag.Parse()
-		dutcpu(*host, *port, *pubKey, *hostKey, *cpuPort)
+		v("pubkey %v", *pubKey)
+		if err := dutcpu(*host, *port, *pubKey, *hostKey, *cpuPort); err != nil {
+			log.Printf("cpu service: %v", err)
+		}
 	case "device":
 		err = uinit(*host, *port)
+	default:
+		log.Printf("Unknown mode %v", a[0])
 	}
 	log.Printf("We are now done ......................")
 	if err != nil {

@@ -57,20 +57,6 @@ func (*Command) Reboot(args *RPCReboot, r *RPCRes) error {
 	return nil
 }
 
-type RPCKexec struct {
-	File string
-	When time.Duration
-}
-
-func (*Command) Kexec(args *RPCReboot, r *RPCRes) error {
-	go func() {
-		time.Sleep(args.When)
-	}()
-	*r = RPCRes{Err: "Not yet"}
-	log.Printf("kexec returns")
-	return nil
-}
-
 type RPCCPU struct {
 	PubKey  []byte
 	HostKey []byte
